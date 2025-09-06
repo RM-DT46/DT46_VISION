@@ -37,7 +37,7 @@ def main():
     reader.open(storage_options, converter_options)
 
     storage_filter = rosbag2_py.StorageFilter(
-        topics=['/detector/armor_img'])
+        topics=['/detector/img_armor_processed'])
     reader.set_filter(storage_filter)
 
     bridge = CvBridge()
@@ -51,13 +51,12 @@ def main():
         # 转换为 OpenCV 图像
         cv_img = bridge.imgmsg_to_cv2(msg, desired_encoding="passthrough")
 
-        # --- 灰度 + OTSU 二值化 ---
-        gray = cv2.cvtColor(cv_img, cv2.COLOR_BGR2GRAY)
-        _, binary = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY | cv2.THRESH_OTSU)
+        # --- 灰度 ---
+        # gray = cv2.cvtColor(cv_img, cv2.COLOR_BGR2GRAY)
 
         # 只保存二值化图
         out_file = os.path.join(save_path, "%06i.png" % count)
-        cv2.imwrite(out_file, binary)
+        cv2.imwrite(out_file, cv_img)
 
         print("Writing binarized image %i" % count)
         count += 1

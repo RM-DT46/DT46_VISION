@@ -1,4 +1,5 @@
 #include "rm_detector/armor_detector_opencv.hpp"
+
 namespace DT46_VISION{
     // 计算两个点之间的距离
     double calculate_distance(const cv::Point2f& p1, const cv::Point2f& p2) {
@@ -109,6 +110,10 @@ namespace DT46_VISION{
 
     void ArmorDetector::update_height_multiplier_max(float new_height_multiplier_max) {
         params.height_multiplier_max = new_height_multiplier_max;
+    }
+
+    void ArmorDetector::update_bin_offset(int new_bin_offset) {
+        params.bin_offset = new_bin_offset;
     }
 
     void ArmorDetector::update_binary_val(int new_binary_val) {
@@ -231,17 +236,31 @@ namespace DT46_VISION{
         cv::Mat roi;
         cv::warpPerspective(img, roi, H, cv::Size(134, int(57 / 0.45f)));
         img_armor = roi;
-        if (classifier_ && !roi.empty()) {
-            res = classifier_->classify(roi);
-        }
+        // --- 预处理：转换到单通道并做 Canny（用你想要的阈值） ---
+        if (!roi.empty() && classifier_) {
+            cv::Mat gray, binary;
 
-        return res; // 只返回结果（id + 置信度）
+            cv::cvtColor(roi, gray, cv::COLOR_BGR2GRAY);
+            
+            // --- 求 Otsu 阈值 ---
+            double otsu_thresh = cv::threshold(gray, binary, 0, 255, cv::THRESH_BINARY | cv::THRESH_OTSU);
+
+            // --- 手动减小阈值，并直接生成二值图 ---
+            double adjusted_thresh = std::max(0.0, otsu_thresh + params.bin_offset);
+
+            cv::threshold(gray, binary, adjusted_thresh, 255, cv::THRESH_BINARY);
+
+            img_armor_processed = binary;
+
+            // 把处理好的二值图传给分类器（分类器内部再做尺寸检查 / 最终 resize）
+            res = classifier_->classify(binary);
+        } // 只返回结果（id + 置信度）
+        return res;
     }
 
     std::pair<NumberClassifier::Result, float> ArmorDetector::is_close(const Light& light1, const Light& light2) {
         NumberClassifier::Result res;
         // 计算公共变量
-        // float height = 
         float height_max, height_min;
         if (std::max(light1.height, light2.height) == light1.height){
             height_max = light1.height;
@@ -430,17 +449,15 @@ namespace DT46_VISION{
         return img_drawn;
     }
 
-    std::tuple<cv::Mat, cv::Mat, cv::Mat> ArmorDetector::display() {
+    std::tuple<cv::Mat, cv::Mat, cv::Mat, cv::Mat> ArmorDetector::display() {
         if (display_mode == 1) {
-            return std::make_tuple(img_binary, cv::Mat(1, 1, CV_8UC1, cv::Scalar(0)), cv::Mat(1, 1, CV_8UC1, cv::Scalar(0)));
-        } else if (display_mode == 2) {
             img_drawn = draw_img();
-            return std::make_tuple(img_binary, img_drawn, img_armor);
+            return std::make_tuple(img_binary, img_drawn, img_armor, img_armor_processed);
         } else if (display_mode == 0) {
-            return std::make_tuple(cv::Mat(1, 1, CV_8UC1, cv::Scalar(0)), cv::Mat(1, 1, CV_8UC1, cv::Scalar(0)), cv::Mat(1, 1, CV_8UC1, cv::Scalar(0)));
+            return std::make_tuple(cv::Mat(1, 1, CV_8UC1, cv::Scalar(0)), cv::Mat(1, 1, CV_8UC1, cv::Scalar(0)), cv::Mat(1, 1, CV_8UC1, cv::Scalar(0)), cv::Mat(1, 1, CV_8UC1, cv::Scalar(0)));
         } else {
             std::cerr << "Invalid display mode" << std::endl;
-            return std::make_tuple(cv::Mat(1, 1, CV_8UC1, cv::Scalar(0)), cv::Mat(1, 1, CV_8UC1, cv::Scalar(0)), cv::Mat(1, 1, CV_8UC1, cv::Scalar(0)));
+            return std::make_tuple(cv::Mat(1, 1, CV_8UC1, cv::Scalar(0)), cv::Mat(1, 1, CV_8UC1, cv::Scalar(0)), cv::Mat(1, 1, CV_8UC1, cv::Scalar(0)), cv::Mat(1, 1, CV_8UC1, cv::Scalar(0)));
         }
     }
 
