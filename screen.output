@@ -1,0 +1,2 @@
+nohup: 忽略输入
+file 'opencv.launch.py' was not found in the share directory of package 'rm_vision_bringup' which is at '/home/xkh/DT46_VISION/install/rm_vision_bringup/share/rm_vision_bringup'
