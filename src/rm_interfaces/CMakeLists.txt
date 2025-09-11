@@ -21,6 +21,7 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/OdoMsg.msg"
   "msg/NavigationMsg.msg"
   "msg/Decision.msg"
+  "msg/Heartbeat.msg"
   DEPENDENCIES std_msgs
 )
 

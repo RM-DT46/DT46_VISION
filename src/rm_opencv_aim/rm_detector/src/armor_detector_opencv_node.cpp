@@ -21,6 +21,8 @@
 #include "rm_interfaces/msg/armors_cpp_msg.hpp"
 #include "rcl_interfaces/msg/set_parameters_result.hpp"
 
+#include "rm_interfaces/msg/heartbeat.hpp"
+
 using namespace std::chrono;
 using namespace cv;
 using namespace std;
@@ -108,6 +110,7 @@ namespace DT46_VISION {
             publisher_bin_img_    = this->create_publisher<sensor_msgs::msg::Image>("/detector/bin_img", 10);
             publisher_img_armor_  = this->create_publisher<sensor_msgs::msg::Image>("/detector/img_armor", 10);
             publisher_img_armor_processed_  = this->create_publisher<sensor_msgs::msg::Image>("/detector/img_armor_processed", 10);
+            publisher_heartbeat_ = this->create_publisher<rm_interfaces::msg::Heartbeat>("/detector/heartbeat", 10);
 
             // 工作线程
             running_.store(true);
@@ -247,6 +250,13 @@ namespace DT46_VISION {
                     publisher_img_armor_->publish(*cv_bridge::CvImage(std_msgs::msg::Header(), "bgr8", img_armor).toImageMsg());
                 if (!img_armor_processed.empty())
                     publisher_img_armor_processed_->publish(*cv_bridge::CvImage(std_msgs::msg::Header(), "mono8", img_armor_processed).toImageMsg());
+                    
+                //-------------heartbeat----------------
+                rm_interfaces::msg::Heartbeat heartbeat_msg;
+                auto rm_now = this->get_clock()->now();
+                heartbeat_msg.heartbeat_time = static_cast<int>(rm_now.seconds());
+                publisher_heartbeat_->publish(heartbeat_msg);
+
                 // -------- 打印节流逻辑 --------
                 int pp_ms = print_period_ms_.load();
                 auto now = clock::now();
@@ -328,6 +338,11 @@ namespace DT46_VISION {
             return result;
         }
 
+        // ---------------- heartbeat ----------------
+
+
+
+
     private:
         // ---- ROS 通道
         rclcpp::Subscription<sensor_msgs::msg::Image>::SharedPtr        sub_image_;
@@ -338,7 +353,7 @@ namespace DT46_VISION {
         rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr           publisher_img_armor_processed_;
         rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr           publisher_bin_img_;
         rclcpp::node_interfaces::OnSetParametersCallbackHandle::SharedPtr callback_handle_;
-
+        rclcpp::Publisher<rm_interfaces::msg::Heartbeat>::SharedPtr                         publisher_heartbeat_;
         // ---- 模块实例
         std::shared_ptr<ArmorDetector> detector_;
         std::shared_ptr<PNP>           pnp_;
