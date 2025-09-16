@@ -2,7 +2,7 @@
 # watch_dog.sh
 TIMEOUT=3  # 设定超时时间为10秒
 NAMESPACE="" # 命名空间 例如 "/infantry_3" 注意要有"/"
-NODE_NAMES=("rm_detector")  # 列出所有需要监控的节点名称，注意是用空格分隔
+NODE_NAMES=("rm_detector" "rm_tracker")  # 列出所有需要监控的节点名称，注意是用空格分隔
 USER="$(whoami)" #用户名
 HOME_DIR=$(eval echo ~$USER)
 WORKING_DIR="$HOME_DIR/DT46_VISION" # 代码目录
@@ -12,7 +12,7 @@ OUTPUT_FILE="$WORKING_DIR/screen.output" # 终端输出记录文件
 declare -A NODE_PACKAGE=(
     ["rm_detector"]="rm_detector"
     ["rm_tracker"]="rm_tracker"
-    ["rm_serial_python"]="rm_serial_python" 
+    ["rm_serial_python"]="rm_serial_python"
     ["usb_camera"]="usb_cam"
     ["hik_camera"]="hik_camera"
     ["mindvision_camera"]="mindvision_camera"
@@ -27,9 +27,9 @@ declare -A NODE_PACKAGE_WAY=(
     ["mindvision_camera"]="mv_launch.py"
 )
 
-declare -A NODE_Heartbeat=( 
-    ["rm_detector"]="/detector/armors_info"
-    ["rm_tracker"]="/tracker/target"
+declare -A NODE_Heartbeat=(
+    ["rm_detector"]="/detector/heartbeat"
+    ["rm_tracker"]="/tracker/heartbeat"
     ["rm_serial_python"]="/nav/decision"
     ["usb_camera"]="/camera_info"
     ["hik_camera"]="/camera_info"
@@ -111,24 +111,25 @@ while true; do
         topic="${NODE_Heartbeat[$node]}" #获取心跳包发送的话题
         echo "- Check $node"
         if ros2 topic list 2>/dev/null | grep -q $topic 2>/dev/null; then
-            data_value=$(timeout 10 ros2 topic echo $topic --once | grep -oE "[0-9]+\.[0-9]+" | awk '{print $2}' 2>/dev/null)
+            data_value=$(timeout 10 ros2 topic echo $topic --once | grep -o "heartbeat_time: [0-9]*" | awk '{print $2}' 2>/dev/null)
             if [ ! -z "$data_value" ]; then
-                if data_value != "${NODE_Last_time[$node]}"; then
+                if [ "$data_value" != "${NODE_Last_time[$node]}" ]; then
                     echo "    $node is OK! Heartbeat Count: $data_value"
-                    "${NODE_Last_time[$node]}" = $data_value
+                    NODE_Last_time["$node"]=$data_value
                 else
-                    echo "    Heartbeat lost for $topic, restarting $topic nodes..."
+                    echo "${NODE_Last_time[$node]}"
+                    echo "    aaaaa Heartbeat lost for $topic, restarting $topic nodes..."
                     restart "$node"
                     break
                 fi
             else
-                echo "    Heartbeat lost for $topic, restarting $topic nodes..."
+                echo "    bbbbb Heartbeat lost for $topic, restarting $topic nodes..."
                 restart "$node"
                 break
             
             fi
         else
-            echo "    Heartbeat topic $topic does not exist, restarting $topic nodes..."
+            echo "    cccccc Heartbeat topic $topic does not exist, restarting $topic nodes..."
             restart "$node"
             break
         fi

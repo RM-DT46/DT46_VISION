@@ -250,12 +250,6 @@ namespace DT46_VISION {
                     publisher_img_armor_->publish(*cv_bridge::CvImage(std_msgs::msg::Header(), "bgr8", img_armor).toImageMsg());
                 if (!img_armor_processed.empty())
                     publisher_img_armor_processed_->publish(*cv_bridge::CvImage(std_msgs::msg::Header(), "mono8", img_armor_processed).toImageMsg());
-                    
-                //-------------heartbeat----------------
-                rm_interfaces::msg::Heartbeat heartbeat_msg;
-                auto rm_now = this->get_clock()->now();
-                heartbeat_msg.heartbeat_time = static_cast<int>(rm_now.seconds());
-                publisher_heartbeat_->publish(heartbeat_msg);
 
                 // -------- 打印节流逻辑 --------
                 int pp_ms = print_period_ms_.load();
@@ -293,6 +287,12 @@ namespace DT46_VISION {
                     last_detected_armors.clear();
                     last_print = now;
                 }
+                // -------------heartbeat----------------
+                rm_interfaces::msg::Heartbeat heartbeat_msg;
+                rm_now = this->get_clock()->now();
+                heartbeat_msg.heartbeat_time = static_cast<int>(rm_now.seconds());
+                publisher_heartbeat_->publish(heartbeat_msg);
+
             }
         }
 
@@ -338,8 +338,6 @@ namespace DT46_VISION {
             return result;
         }
 
-        // ---------------- heartbeat ----------------
-
 
 
 
@@ -353,7 +351,7 @@ namespace DT46_VISION {
         rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr           publisher_img_armor_processed_;
         rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr           publisher_bin_img_;
         rclcpp::node_interfaces::OnSetParametersCallbackHandle::SharedPtr callback_handle_;
-        rclcpp::Publisher<rm_interfaces::msg::Heartbeat>::SharedPtr                         publisher_heartbeat_;
+        rclcpp::Publisher<rm_interfaces::msg::Heartbeat>::SharedPtr     publisher_heartbeat_;
         // ---- 模块实例
         std::shared_ptr<ArmorDetector> detector_;
         std::shared_ptr<PNP>           pnp_;
@@ -374,6 +372,7 @@ namespace DT46_VISION {
         sensor_msgs::msg::CameraInfo::SharedPtr latest_caminfo_;
         std::thread worker_;
         std::atomic<bool> running_{false};
+        rclcpp::Time rm_now;
     };
 
 }

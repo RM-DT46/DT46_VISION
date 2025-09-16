@@ -14,7 +14,7 @@ from rclpy.node import Node
 from std_msgs.msg import Header
 from rcl_interfaces.msg import SetParametersResult
 
-from rm_interfaces.msg import ArmorsCppMsg, ArmorTracking, Decision
+from rm_interfaces.msg import ArmorsCppMsg, ArmorTracking, Decision, Heartbeat
 from rm_tracker.armor_tracker import Tracker
 
 
@@ -90,7 +90,11 @@ class ArmorTrackerNode(Node):
             ArmorsCppMsg, '/detector/armors_info', self._cb_armors, 10)
         self.sub_decision = self.create_subscription(
             Decision, '/nav/decision', self._cb_decision, 10)
-        self.pub_tracking = self.create_publisher(ArmorTracking, '/tracker/target', 10)
+        self.pub_tracking = self.create_publisher(
+            ArmorTracking, '/tracker/target', 10)
+        # heartbeat
+        self.heartbeat = self.create_publisher(
+            Heartbeat, '/tracker/heartbeat', 10)
 
         # ---------- 计时/FPS ----------
         self.log = LogThrottler(self, default_ms=int(self.get_parameter('log_throttle_ms').value))
@@ -214,6 +218,11 @@ class ArmorTrackerNode(Node):
             out.pitch = float(pitch_sent)
             out.shoot_flag = int(shoot_flag)
             self.pub_tracking.publish(out)
+
+            #heartbeat
+            heb = Heartbeat()
+            heb.heartbeat_time = now.to_msg().sec
+            self.heartbeat.publish(heb)
 
             # 日志
             if msg_color and self.log.should_log('track_color'):
