@@ -12,6 +12,8 @@ add_definitions(-Wall -Werror)
 ## Export compile commands for clangd
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
+find_package(rm_interfaces REQUIRED)
+
 find_package(ament_cmake_auto REQUIRED)
 ament_auto_find_build_dependencies()
 
@@ -44,6 +46,12 @@ target_link_libraries(${PROJECT_NAME}
   MVRender
   MvUsb3vTL
 )
+
+ament_target_dependencies(${PROJECT_NAME}
+  rclcpp
+  rm_interfaces
+)
+
 
 rclcpp_components_register_node(${PROJECT_NAME}
   PLUGIN hik_camera::HikCameraNode

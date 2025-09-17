@@ -2,7 +2,7 @@
 # watch_dog.sh
 TIMEOUT=3  # 设定超时时间为10秒
 NAMESPACE="" # 命名空间 例如 "/infantry_3" 注意要有"/"
-NODE_NAMES=("rm_detector" "rm_tracker")  # 列出所有需要监控的节点名称，注意是用空格分隔
+NODE_NAMES=("rm_detector" "rm_tracker" "hik_camera")  # 列出所有需要监控的节点名称，注意是用空格分隔
 USER="$(whoami)" #用户名
 HOME_DIR=$(eval echo ~$USER)
 WORKING_DIR="$HOME_DIR/DT46_VISION" # 代码目录
@@ -30,9 +30,9 @@ declare -A NODE_PACKAGE_WAY=(
 declare -A NODE_Heartbeat=(
     ["rm_detector"]="/detector/heartbeat"
     ["rm_tracker"]="/tracker/heartbeat"
-    ["rm_serial_python"]="/nav/decision"
+    ["rm_serial_python"]="/serial/heartbeat"
     ["usb_camera"]="/camera_info"
-    ["hik_camera"]="/camera_info"
+    ["hik_camera"]="/hik/heartbeat"
     ["mindvision_camera"]="/camera_info"
 )
 

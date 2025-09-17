@@ -8,6 +8,8 @@
 #include <sensor_msgs/msg/camera_info.hpp>
 #include <sensor_msgs/msg/image.hpp>
 
+#include "rm_interfaces/msg/heartbeat.hpp"
+
 namespace hik_camera
 {
 class HikCameraNode : public rclcpp::Node
@@ -46,6 +48,9 @@ public:
     auto qos = use_sensor_data_qos ? rmw_qos_profile_sensor_data : rmw_qos_profile_default;
     camera_pub_ = image_transport::create_camera_publisher(this, "image_raw", qos);
 
+    // -----------heartbeat---------
+    publisher_heartbeat_ = this->create_publisher<rm_interfaces::msg::Heartbeat>("/hik/heartbeat", 10);
+
     declareParameters();
 
     MV_CC_StartGrabbing(camera_handle_);
@@ -71,11 +76,11 @@ public:
 
       RCLCPP_INFO(this->get_logger(), "Publishing image!");
 
-      image_msg_.header.frame_id = "camera_optical_frame";
-      image_msg_.encoding = "rgb8";
+      this->image_msg_.header.frame_id = "camera_optical_frame";
+      this->image_msg_.encoding = "rgb8";
 
       while (rclcpp::ok()) {
-        nRet = MV_CC_GetImageBuffer(camera_handle_, &out_frame, 1000);
+        this->nRet = MV_CC_GetImageBuffer(camera_handle_, &out_frame, 1000);
         if (MV_OK == nRet) {
           convert_param_.pDstBuffer = image_msg_.data.data();
           convert_param_.nDstBufferSize = image_msg_.data.size();
@@ -94,16 +99,23 @@ public:
           camera_info_msg_.header = image_msg_.header;
           camera_pub_.publish(image_msg_, camera_info_msg_);
 
-          MV_CC_FreeImageBuffer(camera_handle_, &out_frame);
+          // -------------heartbeat--------------
+          rm_interfaces::msg::Heartbeat heartbeat_msg;
+          auto rm_now = this->get_clock()->now();
+          heartbeat_msg.heartbeat_time = static_cast<int>(rm_now.seconds());
+          publisher_heartbeat_->publish(heartbeat_msg);
+
+          MV_CC_FreeImageBuffer(this->camera_handle_, &out_frame);
+          
           fail_conut_ = 0;
         } else {
           RCLCPP_WARN(this->get_logger(), "Get buffer failed! nRet: [%x]", nRet);
-          MV_CC_StopGrabbing(camera_handle_);
-          MV_CC_StartGrabbing(camera_handle_);
+          MV_CC_StopGrabbing(this->camera_handle_);
+          MV_CC_StartGrabbing(this->camera_handle_);
           fail_conut_++;
         }
 
-        if (fail_conut_ > 5) {
+        if (this->fail_conut_ > 5) {
           RCLCPP_FATAL(this->get_logger(), "Camera failed!");
           rclcpp::shutdown();
         }
@@ -177,8 +189,11 @@ private:
   }
 
   sensor_msgs::msg::Image image_msg_;
-
   image_transport::CameraPublisher camera_pub_;
+
+  //------------------heartbeat
+  rclcpp::Publisher<rm_interfaces::msg::Heartbeat>::SharedPtr publisher_heartbeat_;
+  rm_interfaces::msg::Heartbeat heartbeat_msg_;
 
   int nRet = MV_OK;
   void * camera_handle_;

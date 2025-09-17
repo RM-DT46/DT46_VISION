@@ -5,7 +5,9 @@ import struct
 import rclpy
 from rclpy.node import Node
 from std_msgs.msg import Header  # 字符串消息类型和头部消息类型
-from rm_interfaces.msg import ArmorTracking , Decision # 导入自定义消息类型
+from rm_interfaces.msg import ArmorTracking , Decision, Heartbeat# 导入自定义消息类型
+
+
 
 class ColorPrint():
     def __init__(self):
