@@ -24,12 +24,12 @@ namespace DT46_VISION {
     // 根据物体尺寸ID选择物体3D坐标
     std::vector<cv::Point3f> PNP::getObjectPoints(int object_size) {
         if (object_size == 6 || object_size == 0) {
-            // 大装甲板 (100mm x 100mm)，只保留四个角点
+            // 大装甲板 (134mm x 58mm)，只保留四个角点
             return {
-                {-50.0f, -50.0f, 0.0f},  // 左上
-                {-50.0f,  50.0f, 0.0f},  // 左下
-                { 50.0f, -50.0f, 0.0f},  // 右上
-                { 50.0f,  50.0f, 0.0f}   // 右下
+                {-66.0f, -29.7f, 8.0f},  // 左上
+                {-66.0f,  29.7f, 8.0f},  // 左下
+                { 66.0f, -29.7f, 8.0f},  // 右上
+                { 66.0f,  29.7f, 8.0f}   // 右下
             };
         } else {
             // 小装甲板 (134mm x 58mm)，只保留四个角点

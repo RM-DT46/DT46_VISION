@@ -57,6 +57,9 @@ namespace DT46_VISION{
             if(res.class_id == 2){
                 return 11;
             }
+            if(res.class_id == 3){
+                return 7;
+            }
         }
         else if(color == 1){
             if(res.class_id == 0){
@@ -67,6 +70,9 @@ namespace DT46_VISION{
             }
             if(res.class_id == 2){
                 return 5;
+            }
+            if(res.class_id == 3){
+                return 1;
             }
         }
         return -1;

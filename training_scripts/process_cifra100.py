@@ -32,7 +32,7 @@ def processSet(set, name):
         img = set[b'data'][i]
         img = processImage(img)
         # showImage(img)
-        path = 'datasets/4negative/' + name + str(i) + '.png'
+        path = 'datasets/5negative/' + name + str(i) + '.png'
         cv2.imwrite(path, img)
         print(path)
 

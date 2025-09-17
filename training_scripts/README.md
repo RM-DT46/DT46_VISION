@@ -28,6 +28,8 @@ RoboMaster 装甲板图案分类器训练相关代码
     # 数字1 bag1
     # 数字3 bag2
     # 哨兵  bag3
+    # 裝甲板 bag4
+    # 啥也不是 bag5
     python3 extract_bag_bin.py ../armor_bag1 ../datasets/1/
     ```
 
@@ -38,7 +40,8 @@ RoboMaster 装甲板图案分类器训练相关代码
     ├─1 -1 == 1
     ├─2 -1 == 3
     ├─3 -1 == 哨兵
-    ├─4negative -1 == 啥也不是
+    ├─4 -1 == 装甲板
+    ├─5negative -1 == 啥也不是
     ```
 
 ## 训练
