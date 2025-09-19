@@ -95,6 +95,7 @@ class ArmorTrackerNode(Node):
         # heartbeat
         self.heartbeat = self.create_publisher(
             Heartbeat, '/tracker/heartbeat', 10)
+        self.heartbeat_timer = self.create_timer(0.5, self._publish_heartbeat)
 
         # ---------- 计时/FPS ----------
         self.log = LogThrottler(self, default_ms=int(self.get_parameter('log_throttle_ms').value))
@@ -109,6 +110,13 @@ class ArmorTrackerNode(Node):
 
         # 初始化：同步参数到 tracker + 重建 KF
         self._sync_all_params_to_tracker(rebuild=True)
+
+    # ---------- heartbeat ----------
+    def _publish_heartbeat(self):
+        now = self.get_clock().now()
+        msg = Heartbeat()
+        msg.heartbeat_time = now.to_msg().sec
+        self.heartbeat.publish(msg)
 
     # ---------- 同步全部参数到 Tracker ----------
     def _sync_all_params_to_tracker(self, rebuild=False):
@@ -218,11 +226,6 @@ class ArmorTrackerNode(Node):
             out.pitch = float(pitch_sent)
             out.shoot_flag = int(shoot_flag)
             self.pub_tracking.publish(out)
-
-            #heartbeat
-            heb = Heartbeat()
-            heb.heartbeat_time = now.to_msg().sec
-            self.heartbeat.publish(heb)
 
             # 日志
             if msg_color and self.log.should_log('track_color'):

@@ -8,6 +8,8 @@
 #include <sensor_msgs/msg/camera_info.hpp>
 #include <sensor_msgs/msg/image.hpp>
 
+#include <chrono>
+using namespace std::chrono_literals;
 #include "rm_interfaces/msg/heartbeat.hpp"
 
 namespace hik_camera
@@ -50,6 +52,16 @@ public:
 
     // -----------heartbeat---------
     publisher_heartbeat_ = this->create_publisher<rm_interfaces::msg::Heartbeat>("/hik/heartbeat", 10);
+    time_contorl_ = this->create_wall_timer(
+      500ms,
+      [this]() {
+        rm_interfaces::msg::Heartbeat heartbeat_msg;
+        auto rm_now = this->get_clock()->now();
+        heartbeat_msg.heartbeat_time = static_cast<int>(rm_now.seconds());
+        publisher_heartbeat_->publish(heartbeat_msg);
+        }
+      );
+
 
     declareParameters();
 
@@ -98,12 +110,6 @@ public:
 
           camera_info_msg_.header = image_msg_.header;
           camera_pub_.publish(image_msg_, camera_info_msg_);
-
-          // -------------heartbeat--------------
-          rm_interfaces::msg::Heartbeat heartbeat_msg;
-          auto rm_now = this->get_clock()->now();
-          heartbeat_msg.heartbeat_time = static_cast<int>(rm_now.seconds());
-          publisher_heartbeat_->publish(heartbeat_msg);
 
           MV_CC_FreeImageBuffer(this->camera_handle_, &out_frame);
           
@@ -193,6 +199,7 @@ private:
 
   //------------------heartbeat
   rclcpp::Publisher<rm_interfaces::msg::Heartbeat>::SharedPtr publisher_heartbeat_;
+  rclcpp::TimerBase::SharedPtr                                time_contorl_;
   rm_interfaces::msg::Heartbeat heartbeat_msg_;
 
   int nRet = MV_OK;

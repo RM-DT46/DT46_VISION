@@ -17,6 +17,9 @@
 #include <fcntl.h>
 #include <unistd.h>
 
+#include "rm_interfaces/msg/heartbeat.hpp"
+
+
 using namespace std::chrono_literals;
 
 class UsbCameraNode : public rclcpp::Node {
@@ -79,6 +82,18 @@ public:
       image_pub_ = image_transport::create_publisher(this, "image_raw");
       cinfo_pub_ = this->create_publisher<sensor_msgs::msg::CameraInfo>("camera_info", 10);
     }
+
+    // heartbeat
+    publisher_heartbeat_ = this->create_publisher<rm_interfaces::msg::Heartbeat>("/usb/heartbeat", 10);
+    time_contorl_ = this->create_wall_timer(
+      500ms,
+      [this]() {
+        rm_interfaces::msg::Heartbeat heartbeat_msg;
+        auto now = this->get_clock()->now();
+        heartbeat_msg.heartbeat_time = static_cast<int>(now.seconds());
+        publisher_heartbeat_->publish(heartbeat_msg);
+        }
+      );
 
     // ========= 4) 打开相机并应用参数 =========
     openCamera();
@@ -359,6 +374,12 @@ private:
   rclcpp::Publisher<sensor_msgs::msg::CameraInfo>::SharedPtr cinfo_pub_;
   std::shared_ptr<camera_info_manager::CameraInfoManager> cinfo_mgr_;
   rclcpp::TimerBase::SharedPtr timer_;
+
+  // heartbeat
+  rclcpp::Publisher<rm_interfaces::msg::Heartbeat>::SharedPtr publisher_heartbeat_;
+  rclcpp::TimerBase::SharedPtr                                time_contorl_;
+
+  rm_interfaces::msg::Heartbeat heartbeat_msg_;
 
   // 采集
   cv::VideoCapture cap_;

@@ -16,6 +16,9 @@ find_package(cv_bridge REQUIRED)
 find_package(camera_info_manager REQUIRED)
 find_package(OpenCV REQUIRED)
 
+# 添加rm_interfaces查找
+find_package(rm_interfaces REQUIRED)
+
 include_directories(
   include
   ${OpenCV_INCLUDE_DIRS}
@@ -23,7 +26,11 @@ include_directories(
 
 add_executable(usb_camera_node src/usb_camera_node.cpp)
 ament_target_dependencies(usb_camera_node
-  rclcpp sensor_msgs image_transport cv_bridge camera_info_manager
+  rclcpp sensor_msgs 
+  image_transport cv_bridge 
+  camera_info_manager
+  rclcpp
+  rm_interfaces
 )
 target_link_libraries(usb_camera_node ${OpenCV_LIBS})
 

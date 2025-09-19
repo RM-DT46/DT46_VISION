@@ -31,6 +31,10 @@ class RMSerialDriver(Node):
         )
         # 创建发布者
         self.pub_uart_receive = self.create_publisher(Decision, "/nav/decision", 10)
+
+        # heartbeat
+        self.heartbeat = self.create_publisher(Heartbeat, "/nav/heartbeat", 10)
+
         # 创建变量
         self.tracking_color = 10
         self.timestamp = 0
@@ -91,6 +95,12 @@ class RMSerialDriver(Node):
         self.pub_uart_receive.publish(serial_receive_msg)
         self.get_logger().info("接收数据线程已启动")
         bytes_received = 0
+
+        #heartbeat
+        heb = Heartbeat()
+        heb.heartbeat_time = self.get_clock().now().to_msg().sec
+        self.heartbeat.publish(heb)
+
         while rclpy.ok():
             try:
                 # 更新消息头部
